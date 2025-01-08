@@ -8,6 +8,6 @@ import (
 func RegisterRoutes(server *gin.Engine) {
 	// Create handler with the MongoDB client
 	eventHandler := NewEventHandler(db.Client)
-	server.GET("events")
+	server.GET("events", eventHandler.GetEvents)
 	server.POST("events", eventHandler.CreateEvent)
 }

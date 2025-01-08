@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/v2/mongo"
 )
 
@@ -41,6 +42,28 @@ func (e Event) Save(collection *mongo.Collection) error {
 	return nil
 }
 
-func GetAllEvents() {
+func GetAllEvents(collection *mongo.Collection) ([]Event, error) {
+	// Create a context with a 10-second timeout
+	// This ensures the database operation doesn't hang indefinitely
+	// defer cancel() releases resources when the function returns
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
 
+	// find all documents in the collection
+	// Find() without any filter (bson.M{} is an empty filter) returns all documents
+	// cursor allows us to iterate through the results efficiently
+	cursor, err := collection.Find(ctx, bson.M{})
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch events: %w", err)
+	}
+	// Ensure cursor is closed after function returns to prevent memory leaks
+	defer cursor.Close(ctx)
+
+	// decode all document into Event slice // Initialize slice to store all events
+	var events []Event
+	// cursor.All decodes all documents into the events slice at once
+	if err = cursor.All(ctx, &events); err != nil {
+		return nil, fmt.Errorf("failed to decode events: %w", err)
+	}
+	return events, nil
 }

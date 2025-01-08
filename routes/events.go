@@ -43,3 +43,16 @@ func (h *EventHandler) CreateEvent(context *gin.Context) {
 	context.JSON(http.StatusCreated, gin.H{"message": "Successfully created", "event": event})
 
 }
+
+func (h *EventHandler) GetEvents(context *gin.Context) {
+	// Get reference to the events collection from MongoDB
+	collection := h.client.Database("events_db").Collection("events")
+
+	// Call GetAllEvents to retrieve all events from the database
+	events, err := models.GetAllEvents(collection)
+	if err != nil {
+		context.JSON(http.StatusInternalServerError, gin.H{"message": "failed to fetch events"})
+		return
+	}
+	context.JSON(http.StatusOK, events)
+}
